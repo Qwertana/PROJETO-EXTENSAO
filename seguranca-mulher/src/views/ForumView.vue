@@ -92,7 +92,7 @@ const desabafos = ref([]) // Começa vazio e puxa do backend
 // Busca os posts assim que a tela abre
 onMounted(async () => {
   try {
-    const response = await axios.get('http://localhost:3000/api/desabafos')
+    const response = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/desabafos')
     desabafos.value = response.data
   } catch (error) {
     console.error("Erro ao buscar dados do backend:", error)
@@ -103,7 +103,7 @@ onMounted(async () => {
 const postar = async () => {
   if (novoDesabafo.value.trim() !== '') {
     try {
-      const response = await axios.post('http://localhost:3000/api/desabafos', {
+      const response = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/desabafos', {
         texto: novoDesabafo.value
       })
       desabafos.value.unshift(response.data)
@@ -119,7 +119,7 @@ const excluirPost = async (id) => {
   const confirmar = confirm("Tem certeza de que deseja apagar permanentemente esta publicação?")
   if (confirmar) {
     try {
-      await axios.delete(`http://localhost:3000/api/desabafos/${id}`)
+      await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/desabafos/${id}`)
       desabafos.value = desabafos.value.filter(post => post.id !== id)
     } catch (error) {
       alert("Erro ao deletar post do servidor.")
