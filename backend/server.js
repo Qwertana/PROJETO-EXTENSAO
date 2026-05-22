@@ -13,8 +13,8 @@ app.use(express.json());
 const MONGO_URI = "mongodb+srv://admin:extensao0378@cluster0.czbppgm.mongodb.net/seguranca_mulher?retryWrites=true&w=majority&appName=Cluster0";
 // Conexão com a Nuvem
 mongoose.connect(MONGO_URI)
-  .then(() => console.log("🔌 CONECTADO AO MONGODB ATLAS COM SUCESSO!"))
-  .catch(err => console.error("❌ Erro ao conectar ao MongoDB:", err));
+  .then(() => console.log("CONECTADO AO MONGODB ATLAS COM SUCESSO!"))
+  .catch(err => console.error("Erro ao conectar ao MongoDB:", err));
 
 // --- SCHEMA (Estrutura da tabela no Banco de Dados NoSQL) ---
 const DesabafoSchema = new mongoose.Schema({
@@ -65,5 +65,5 @@ app.delete('/api/desabafos/:id', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 SERVIDOR COMPLETO RODANDO EM: http://localhost:${PORT}`);
+  console.log(`SERVIDOR COMPLETO RODANDO EM: http://localhost:${PORT}`);
 });
