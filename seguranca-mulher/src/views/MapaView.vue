@@ -18,23 +18,24 @@
 import { onMounted } from 'vue'
 import L from 'leaflet'
 
-const emitirAlertaAutonomo = async () => {
-  try {
-    await axios.post('http://localhost:3000/api/sos', {
-      localizacao: "Andaraí, RJ",
-      telefoneDestino: "+5521999999999"
-    })
-    alert("🚨 SOS disparado com sucesso!")
-  } catch (error) {
-    console.error("Erro ao enviar SOS", error)
-  }
+// Nova função MVP conectada ao WhatsApp
+const emitirAlerta = () => {
+  const telefoneConfianca = "5521971770102"; 
+  
+  const mensagem = "🚨ALIA ALERT!🚨 Este é um alerta de emergência. Preciso de ajuda urgente. Por favor, entre em contato.";
+
+  // O encodeURIComponent formata os espaços e acentos para a URL não quebrar
+  const url = `https://wa.me/${telefoneConfianca}?text=${encodeURIComponent(mensagem)}`;
+
+  // Dispara o WhatsApp em uma nova aba/janela
+  window.open(url, '_blank');
 }
 
 onMounted(() => {
   // Inicializa o mapa focado no Andaraí com zoom aproximado ideal
   const map = L.map('map', { zoomControl: false }).setView([-22.9223, -43.2477], 15)
 
-  // Move o controle de zoom (+/-) para o canto inferior direito para não atrapalhar o topo
+  // Move o controle de zoom (+/-) para o canto inferior direito
   L.control.zoom({ position: 'bottomright' }).addTo(map)
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
