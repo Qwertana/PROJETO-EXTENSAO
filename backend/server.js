@@ -7,8 +7,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-//STRING DE CONEXÃO DO ATLAS CONSTRUÍDA
-"mongodb+srv://admin:extensao0378@cluster0.czbppgm.mongodb.net/seguranca_mulher?retryWrites=true&w=majority&appName=Cluster0";
+app.use(express.json());
+
+// STRING DE CONEXÃO DO ATLAS
+const MONGO_URI = "mongodb+srv://admin:extensao0378@cluster0.czbppgm.mongodb.net/seguranca_mulher?retryWrites=true&w=majority&appName=Cluster0";
 // Conexão com a Nuvem
 mongoose.connect(MONGO_URI)
   .then(() => console.log("🔌 CONECTADO AO MONGODB ATLAS COM SUCESSO!"))
