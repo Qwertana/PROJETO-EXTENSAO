@@ -22,7 +22,7 @@
           <div class="avatar-anonimo">{{ post.proprio ? '👤' : '✨' }}</div>
           <div class="conteudo-post">
             <p class="texto-post">{{ post.texto }}</p>
-            <button v-if="post.proprio" @click="excluirPost(post.id)" class="btn-excluir" title="Excluir publicação">
+            <button v-if="post.proprio" @click="excluirPost(post._id)" class="btn-excluir" title="Excluir publicação">
                 🗑️
               </button>
 
@@ -78,7 +78,6 @@
   </div>
 </template>
 
-HTML
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -120,7 +119,7 @@ const excluirPost = async (id) => {
   if (confirmar) {
     try {
       await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/desabafos/${id}`)
-      desabafos.value = desabafos.value.filter(post => post.id !== id)
+      desabafos.value = desabafos.value.filter(post => post._id !== id)
     } catch (error) {
       alert("Erro ao deletar post do servidor.")
     }
