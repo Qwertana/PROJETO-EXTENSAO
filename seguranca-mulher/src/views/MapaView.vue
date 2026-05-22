@@ -20,19 +20,33 @@ import L from 'leaflet'
 
 // Nova função MVP conectada ao WhatsApp
 const emitirAlerta = () => {
-  const telefoneConfianca = "5521971770102"; 
-  
-  const mensagem = "🚨ALIA ALERT!🚨 Este é um alerta de emergência. Preciso de ajuda urgente. Por favor, entre em contato.";
+  //Tenta buscar o número salvo na memória do celular/navegador
+  let telefoneConfianca = localStorage.getItem('numeroConfiancaAlia');
 
-  // O encodeURIComponent formata os espaços e acentos para a URL não quebrar
-  const url = `https://wa.me/${telefoneConfianca}?text=${encodeURIComponent(mensagem)}`;
+  //Se a usuária ainda não tiver cadastrado um número
+  if (!telefoneConfianca) {
+    const numeroDigitado = prompt("Configure seu SOS: Digite o número de confiança com DDD (ex: 21999999999):");
+    
+    // Se ela digitou algo, limpa os espaços/traços e salva
+    if (numeroDigitado) {
+      telefoneConfianca = numeroDigitado.replace(/\D/g, ''); // Remove tudo que não for número
+      localStorage.setItem('numeroConfiancaAlia', telefoneConfianca);
+      alert("Número salvo com sucesso! O seu botão de SOS já está configurado.");
+    }
+    
+    // Interrompo aqui para ela não mandar um alerta acidental logo após configurar
+    return; 
+  }
 
-  // Dispara o WhatsApp em uma nova aba/janela
+  // Se o número já existe na memória, dispara o alerta direto!
+  const ddi = "55"; // Código do Brasil
+  const mensagem = "🚨 SOS ALIA! Este é um alerta de emergência. Estou no Andaraí, preciso de ajuda urgente. Por favor, entre em contato.";
+
+  const url = `https://wa.me/${ddi}${telefoneConfianca}?text=${encodeURIComponent(mensagem)}`;
   window.open(url, '_blank');
 }
 
 onMounted(() => {
-  // Inicializa o mapa focado no Andaraí com zoom aproximado ideal
   const map = L.map('map', { zoomControl: false }).setView([-22.9223, -43.2477], 15)
 
   // Move o controle de zoom (+/-) para o canto inferior direito

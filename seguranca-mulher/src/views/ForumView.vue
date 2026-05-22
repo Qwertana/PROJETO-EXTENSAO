@@ -6,64 +6,84 @@
       <div class="abas-navegacao">
         <button @click="abaAtiva = 'feed'" :class="{ 'aba-ativa': abaAtiva === 'feed' }">Feed</button>
         <button @click="abaAtiva = 'perfil'" :class="{ 'aba-ativa': abaAtiva === 'perfil' }">Meu Perfil</button>
+        <button @click="abaAtiva = 'editar'" :class="{ 'aba-ativa': abaAtiva === 'editar' }">Editar Perfil</button>
       </div>
 
       <RouterLink to="/mapa" class="btn-voltar">🗺️ Mapa</RouterLink>
       <button @click="deslogar" class="btn-sair">Sair</button>
     </header>
 
-  <main class="feed-mensagens">
-      <div v-if="postsFiltrados.length === 0" class="card-aviso-vazio">
-        <p>Você ainda não fez nenhuma publicação anônima. Suas postagens aparecerão aqui!</p>
-      </div>
+<main class="feed-mensagens">
+      <template v-if="abaAtiva !== 'editar'">
+        <div v-if="postsFiltrados.length === 0" class="card-aviso-vazio">
+          <p>Você ainda não fez nenhuma publicação anônima. Suas postagens aparecerão aqui!</p>
+        </div>
 
-      <div v-for="(post, index) in postsFiltrados" :key="index" class="card-desabafo">
-        <div class="main-post-layout">
-          <div class="avatar-anonimo">{{ post.proprio ? '👤' : '✨' }}</div>
-          <div class="conteudo-post">
-            <p class="texto-post">{{ post.texto }}</p>
-            <button v-if="post.proprio" @click="excluirPost(post._id)" class="btn-excluir" title="Excluir publicação">
-                🗑️
-              </button>
+        <div v-for="(post, index) in postsFiltrados" :key="index" class="card-desabafo">
+          <div class="main-post-layout">
+            <div class="avatar-anonimo">{{ post.proprio ? '👤' : '✨' }}</div>
+            <div class="conteudo-post">
+              <p class="texto-post">{{ post.texto }}</p>
+              <button v-if="post.proprio" @click="excluirPost(post._id)" class="btn-excluir" title="Excluir publicação">
+                  🗑️
+                </button>
 
-            <span class="data-post">
-              {{ post.data }} • {{ post.proprio ? 'Postado por você (Anônimo)' : 'Anônimo' }}
-            </span>
+              <span class="data-post">
+                {{ post.data }} • {{ post.proprio ? 'Postado por você (Anônimo)' : 'Anônimo' }}
+              </span>
+              
+              <div class="interacoes">
+                <button @click="curtir(post)" class="btn-interagir" :class="{ 'curtido': post.curtidoByUser }">
+                  <span class="icone-coracao">{{ post.curtidoByUser ? '❤️' : '🤍' }}</span> 
+                  {{ post.curtidas }}
+                </button>
+                <button @click="post.mostrarRespostas = !post.mostrarRespostas" class="btn-interagir">
+                  💬 {{ post.respostas ? post.respostas.length : 0 }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="post.mostrarRespostas" class="secao-respostas">
+            <div class="lista-respostas">
+              <div v-for="(resp, rIndex) in post.respostas" :key="rIndex" class="card-resposta">
+                <p class="texto-resposta">{{ resp.texto }}</p>
+                <span class="data-post">Anônima</span>
+              </div>
+            </div>
             
-            <div class="interacoes">
-              <button @click="curtir(post)" class="btn-interagir" :class="{ 'curtido': post.curtidoByUser }">
-                <span class="icone-coracao">{{ post.curtidoByUser ? '❤️' : '🤍' }}</span> 
-                {{ post.curtidas }}
-              </button>
-              <button @click="post.mostrarRespostas = !post.mostrarRespostas" class="btn-interagir">
-                💬 {{ post.respostas ? post.respostas.length : 0 }}
-              </button>
+            <div class="input-resposta-wrapper">
+              <input 
+                v-model="post.novaResposta" 
+                type="text" 
+                placeholder="Envie uma palavra de apoio..." 
+                @keyup.enter="adicionarResposta(index)"
+              />
+              <button @click="adicionarResposta(index)" class="btn-enviar-resposta">Responder</button>
             </div>
           </div>
         </div>
+      </template>
 
-        <div v-if="post.mostrarRespostas" class="secao-respostas">
-          <div class="lista-respostas">
-            <div v-for="(resp, rIndex) in post.respostas" :key="rIndex" class="card-resposta">
-              <p class="texto-resposta">{{ resp.texto }}</p>
-              <span class="data-post">Anônima</span>
-            </div>
-          </div>
-          
-          <div class="input-resposta-wrapper">
-            <input 
-              v-model="post.novaResposta" 
-              type="text" 
-              placeholder="Envie uma palavra de apoio..." 
-              @keyup.enter="adicionarResposta(index)"
-            />
-            <button @click="adicionarResposta(index)" class="btn-enviar-resposta">Responder</button>
-          </div>
+      <div v-if="abaAtiva === 'editar'" class="card-editar-perfil">
+        <h3 class="titulo-sessao">Configurações de Segurança</h3>
+        <p class="texto-instrucao">Gerencie o número do seu contato de confiança. Este é o número que receberá o alerta quando você acionar o botão SOS no Mapa.</p>
+        
+        <div class="input-grupo">
+          <label>Número de Emergência (com DDD):</label>
+          <input 
+            v-model="telefoneConfianca" 
+            type="text" 
+            placeholder="Ex: 21999999999"
+            maxlength="11"
+          />
         </div>
+        
+        <button @click="salvarPerfil" class="btn-salvar-perfil">Salvar Alterações</button>
       </div>
     </main>
 
-    <footer class="input-container">
+    <footer v-if="abaAtiva !== 'editar'" class="input-container">
       <div class="input-wrapper">
         <input 
           v-model="novoDesabafo" 
@@ -479,5 +499,83 @@ const postsFiltrados = computed(() => {
 .btn-sair:hover {
   background: #ffe5e9;
   color: #ff4d6d;
+}
+.card-editar-perfil {
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  padding: 30px;
+  border-radius: 24px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  text-align: left;
+  margin-top: 10px;
+}
+
+.titulo-sessao {
+  color: #5a5a5a;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.texto-instrucao {
+  color: #888;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 25px;
+}
+
+.input-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.input-grupo label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ff4d6d; /* Rosa do tema */
+  padding-left: 5px;
+}
+
+.input-grupo input {
+  background: #f8f8f8;
+  border: 1px solid #eee;
+  padding: 12px 15px;
+  border-radius: 15px;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+  color: #444;
+  transition: border-color 0.2s;
+}
+
+.input-grupo input:focus {
+  border-color: #ff4d6d;
+}
+
+.btn-salvar-perfil {
+  width: 100%;
+  background: #ff4d6d;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 18px;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-salvar-perfil:hover {
+  background: #ff3355;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(255, 77, 109, 0.2);
+}
+
+.btn-salvar-perfil:active {
+  transform: translateY(0);
 }
 </style>
