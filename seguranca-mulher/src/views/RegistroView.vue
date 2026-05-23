@@ -10,6 +10,7 @@
         <input v-model="dataNasc" type="text" placeholder="Data de Nascimento (ddmmaaaa)" />
         <input v-model="telefoneSeguranca" type="tel" placeholder="Nº de Segurança (com DDD)" />
         <button @click="registrar">Finalizar Cadastro</button>
+        <button @click="registrar" class="btn-registrar">Finalizar Cadastro</button>
       </div>
     </div>
 
@@ -123,10 +124,18 @@ input:focus {
   border: none;
   padding: 15px;
   border-radius: 15px;
+  font-family: 'Quicksand', sans-serif;
   font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
   margin-top: 10px;
   box-shadow: 0 4px 12px rgba(255, 77, 109, 0.3);
+  transition: all 0.2s; /* Adicione isso para um efeito suave */
+}
+
+.btn-registrar:hover {
+  background: #ff2c53;
+  transform: translateY(-2px);
 }
 
 .btn-voltar-flutuante {
