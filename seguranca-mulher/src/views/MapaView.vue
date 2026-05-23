@@ -92,17 +92,27 @@ onMounted(async () => {
   map.on('click', async (e) => {
     const { lat, lng } = e.latlng
     const desc = prompt("Descreva o risco neste local:")
-    if (desc) {
+    if (desc && desc.trim() !== "") {
       try {
-        const novaMarca = { lat, lng, descricao: desc }
+          const novaMarca = { 
+          lat: lat, 
+          lng: lng, 
+          descricao: desc 
+        }
         const res = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/mapa/marcacoes', novaMarca)
         
         // Adiciona o pino visualmente após o sucesso no banco
-        L.marker([lat, lng]).addTo(map).bindPopup(`<b>Risco:</b><br>${desc}`).openPopup()
-      } catch (e) { alert("Erro ao salvar marcação.") }
+         L.marker([lat, lng])
+         .addTo(map)
+         .bindPopup(`<b>Risco:</b><br>${res.data.descricao}`)
+         .openPopup()
+         
+      } catch (e) { 
+        console.error(e);
+        alert("Erro ao salvar marcação no banco de dados.") 
+      }
     }
   })
-})
 </script>
 
 <style scoped>

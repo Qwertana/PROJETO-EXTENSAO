@@ -127,9 +127,18 @@ app.get('/api/mapa/marcacoes', async (req, res) => {
 
 // Rota para QUALQUER UM salvar uma marcacao
 app.post('/api/mapa/marcacoes', async (req, res) => {
-  const nova = new Marcacao(req.body);
-  await nova.save();
-  res.status(201).json(nova);
+  try {
+    const { lat, lng, descricao } = req.body; // Pega o que veio do front
+    const novaMarca = new Marcacao({ 
+      lat: lat, 
+      lng: lng, 
+      descricao: descricao // Salva no banco
+    });
+    await novaMarca.save();
+    res.status(201).json(novaMarca); // Devolve o objeto completo
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Rota para buscar TODAS as marcações salvas
@@ -150,8 +159,8 @@ app.post('/api/desabafos/:id/comentar', async (req, res) => {
     
     if (!desabafo) return res.status(404).json({ error: "Post não encontrado" });
 
-    // Adiciona o comentário no array de respostas
     desabafo.respostas.push(comentario);
+    desabafo.markModified('respostas'); // ESSENCIAL PARA ARRAYS NO MONGOOSE
     await desabafo.save();
 
     res.status(200).json(desabafo);
