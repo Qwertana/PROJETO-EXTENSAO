@@ -72,7 +72,8 @@ onMounted(() => {
 
 <style scoped>
 * {
-  box-sizing: border-box;
+  box-sizing: border-box !important;
+  max-width: 100% !important;
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap');
@@ -81,8 +82,8 @@ onMounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -97,12 +98,12 @@ onMounted(() => {
   z-index: 0;
 }
 
-:global(body, html) {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden; /* Bloqueia qualquer rolagem */
+:global(html, body) {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 .mapa-header {
