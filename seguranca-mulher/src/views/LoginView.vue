@@ -37,7 +37,7 @@ const fazerLogin = async () => {
     });
 
     if (response.status === 200) {
-      localStorage.setItem('usuarioCPF', cpf.value);
+      localStorage.setItem('cpfUsuario', cpf.value); 
       router.push('/mapa');
     }
   } catch (error) {
