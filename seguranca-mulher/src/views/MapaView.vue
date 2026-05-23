@@ -18,52 +18,53 @@
 import { onMounted } from 'vue'
 import L from 'leaflet'
 
-// Nova função MVP conectada ao WhatsApp
+// Função que dispara o SOS
 const emitirAlerta = () => {
-  //Tenta buscar o número salvo na memória do celular/navegador
-  let telefoneConfianca = localStorage.getItem('numeroConfiancaAlia');
+  //Pega o número salvo
+  let telefone = localStorage.getItem('numeroConfiancaAlia');
 
-  //Se a usuária ainda não tiver cadastrado um número
-  if (!telefoneConfianca) {
-    const numeroDigitado = prompt("Configure seu SOS: Digite o número de confiança com DDD (ex: 21999999999):");
-    
-    // Se ela digitou algo, limpa os espaços/traços e salva
-    if (numeroDigitado) {
-      telefoneConfianca = numeroDigitado.replace(/\D/g, ''); // Remove tudo que não for número
-      localStorage.setItem('numeroConfiancaAlia', telefoneConfianca);
-      alert("Número salvo com sucesso! O seu botão de SOS já está configurado.");
+  //Se não tiver número, pede para configurar
+  if (!telefone) {
+    const novoNum = prompt("Configure seu SOS: Digite o número com DDD (ex: 21999999999):");
+    if (novoNum) {
+      telefone = novoNum.replace(/\D/g, '');
+      localStorage.setItem('numeroConfiancaAlia', telefone);
+      alert("Número salvo! Agora clique no SOS novamente para enviar o alerta.");
     }
-    
-    // Interrompo aqui para ela não mandar um alerta acidental logo após configurar
-    return; 
+    return;
   }
 
-  // Se o número já existe na memória, dispara o alerta direto!
-  const ddi = "55"; // Código do Brasil
-  const mensagem = "🚨 SOS ALIA! Este é um alerta de emergência. Estou no Andaraí, preciso de ajuda urgente. Por favor, entre em contato.";
-
-  const url = `https://wa.me/${ddi}${telefoneConfianca}?text=${encodeURIComponent(mensagem)}`;
-  window.open(url, '_blank');
+  //Tenta pegar a localização e enviar
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const link = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        const msg = `🚨ALIA ALERT!🚨 Preciso de ajuda. Minha localização: ${link}`;
+        window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
+      },
+      () => {
+        // Se a pessoa negar a localização
+        const msg = "🚨ALIA ALERT!🚨 Preciso de ajuda urgente!";
+        window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+    );
+  }
 }
 
 onMounted(() => {
   const map = L.map('map', { zoomControl: false }).setView([-22.9223, -43.2477], 15)
-
-  // Move o controle de zoom (+/-) para o canto inferior direito
   L.control.zoom({ position: 'bottomright' }).addTo(map)
-
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map)
 
   map.on('click', (e) => {
     const { lat, lng } = e.latlng
-    const desc = prompt("Descreva o risco neste local (ex: Falta de iluminação, Ponto isolado):")
-    
+    const desc = prompt("Descreva o risco neste local:")
     if (desc) {
-      L.marker([lat, lng]).addTo(map)
-        .bindPopup(`<b>Risco sinalizado:</b><br>${desc}`)
-        .openPopup()
+      L.marker([lat, lng]).addTo(map).bindPopup(`<b>Risco:</b><br>${desc}`).openPopup()
     }
   })
 })
