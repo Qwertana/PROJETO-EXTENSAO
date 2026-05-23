@@ -13,7 +13,7 @@
       <button @click="deslogar" class="btn-sair">Sair</button>
     </header>
 
-<main class="feed-mensagens">
+    <main class="feed-mensagens">
       <template v-if="abaAtiva !== 'editar'">
         <div v-if="postsFiltrados.length === 0" class="card-aviso-vazio">
           <p>Você ainda não fez nenhuma publicação anônima. Suas postagens aparecerão aqui!</p>
@@ -79,7 +79,14 @@
           />
         </div>
         
-        <button @click="salvarPerfil" class="btn-salvar-perfil">Salvar Alterações</button>
+        <div class="botoes-perfil-container">
+          <button @click="salvarPerfil" class="btn-salvar-perfil">
+            {{ telefoneConfianca ? 'Atualizar Número' : 'Salvar Alterações' }}
+          </button>
+          <button v-if="telefoneConfianca" @click="excluirNumero" class="btn-deletar-perfil">
+            Apagar Número
+          </button>
+        </div>
       </div>
     </main>
 
@@ -106,10 +113,13 @@ import axios from 'axios'
 const router = useRouter()
 const abaAtiva = ref('feed')
 const novoDesabafo = ref('')
-const desabafos = ref([]) // Começa vazio e puxa do backend
+const desabafos = ref([]) 
+const telefoneConfianca = ref('') 
 
-// Busca os posts assim que a tela abre
 onMounted(async () => {
+  // Puxa o número da memória do celular assim que abre
+  telefoneConfianca.value = localStorage.getItem('numeroConfiancaAlia') || ''
+
   try {
     const response = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/desabafos')
     desabafos.value = response.data
@@ -118,7 +128,29 @@ onMounted(async () => {
   }
 })
 
-// Função de Postar ÚNICA e conectada ao Axios
+const salvarPerfil = () => {
+  const numeroLimpo = telefoneConfianca.value.replace(/\D/g, '') // Tira traços e espaços
+  
+  if (numeroLimpo.length < 10) {
+    alert("Por favor, digite um número válido com DDD (mínimo 10 dígitos).")
+    return
+  }
+
+  // Salva no armazenamento do navegador
+  localStorage.setItem('numeroConfiancaAlia', numeroLimpo)
+  telefoneConfianca.value = numeroLimpo
+  alert("Contato de emergência guardado com sucesso!")
+}
+
+const excluirNumero = () => {
+  const confirmar = confirm("Tem certeza de que deseja remover o seu contato de confiança?")
+  if (confirmar) {
+    localStorage.removeItem('numeroConfiancaAlia')
+    telefoneConfianca.value = '' // Limpa o campo na tela
+    alert("O número de emergência foi removido.")
+  }
+}
+
 const postar = async () => {
   if (novoDesabafo.value.trim() !== '') {
     try {
@@ -133,7 +165,6 @@ const postar = async () => {
   }
 }
 
-// Função de Excluir ÚNICA e conectada ao Axios
 const excluirPost = async (id) => {
   const confirmar = confirm("Tem certeza de que deseja apagar permanentemente esta publicação?")
   if (confirmar) {
@@ -500,6 +531,8 @@ const postsFiltrados = computed(() => {
   background: #ffe5e9;
   color: #ff4d6d;
 }
+
+/* --- ESTILOS DA NOVA ABA EDITAR PERFIL --- */
 .card-editar-perfil {
   width: 100%;
   max-width: 500px;
@@ -535,7 +568,7 @@ const postsFiltrados = computed(() => {
 .input-grupo label {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #ff4d6d; /* Rosa do tema */
+  color: #ff4d6d;
   padding-left: 5px;
 }
 
@@ -555,8 +588,15 @@ const postsFiltrados = computed(() => {
   border-color: #ff4d6d;
 }
 
-.btn-salvar-perfil {
+.botoes-perfil-container {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
   width: 100%;
+}
+
+.btn-salvar-perfil {
+  flex: 2;
   background: #ff4d6d;
   color: white;
   border: none;
@@ -575,7 +615,22 @@ const postsFiltrados = computed(() => {
   box-shadow: 0 5px 12px rgba(255, 77, 109, 0.2);
 }
 
-.btn-salvar-perfil:active {
-  transform: translateY(0);
+.btn-deletar-perfil {
+  flex: 1;
+  background: #f0f0f0;
+  color: #666;
+  border: none;
+  padding: 14px;
+  border-radius: 18px;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-deletar-perfil:hover {
+  background: #ffe5e9;
+  color: #ff4d6d;
 }
 </style>
