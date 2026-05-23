@@ -15,14 +15,16 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import L from 'leaflet'
+import axios from 'axios'
+
+const marcacoes = ref([]) //Variável para guardar as marcações do banco
 
 // Função que dispara o SOS
 const emitirAlerta = () => {
   //Pega o número salvo
   let telefone = localStorage.getItem('numeroConfiancaAlia');
-
   //Se não tiver número, pede para configurar
   if (!telefone) {
     const novoNum = prompt("Configure seu SOS: Digite o número com DDD (ex: 21999999999):");
@@ -33,38 +35,71 @@ const emitirAlerta = () => {
     }
     return;
   }
-
   //Tenta pegar a localização e enviar
-  if (navigator.geolocation) {
+    if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         const link = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
         const msg = `🚨ALIA ALERT!🚨 Preciso de ajuda. Minha localização: ${link}`;
-        window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
+        
+        abrirWhatsApp(telefone, msg);
       },
       () => {
-        // Se a pessoa negar a localização
         const msg = "🚨ALIA ALERT!🚨 Preciso de ajuda urgente!";
-        window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
+        abrirWhatsApp(telefone, msg);
       }
     );
   }
 }
 
-onMounted(() => {
+// Função auxiliar para forçar a abertura do App
+const abrirWhatsApp = (telefone, msg) => {
+  const mensagemCodificada = encodeURIComponent(msg);
+  
+  // O formato whatsapp://send tenta abrir o app diretamente no mobile
+  // O link https://wa.me é o fallback caso o primeiro falhe
+  const urlApp = `whatsapp://send?phone=55${telefone}&text=${mensagemCodificada}`;
+  const urlWeb = `https://wa.me/55${telefone}?text=${mensagemCodificada}`;
+
+  // Tenta abrir o protocolo do App
+  window.location.href = urlApp;
+
+  // Se o dispositivo não conseguir abrir o app em 1 segundo, abre na web
+  setTimeout(() => {
+    window.open(urlWeb, '_blank');
+  }, 1000);
+}
+
+onMounted(async () => {
   const map = L.map('map', { zoomControl: false }).setView([-22.9223, -43.2477], 15)
   L.control.zoom({ position: 'bottomright' }).addTo(map)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map)
+  //Carregar marcações salvas ao abrir o mapa
+  try {
+    const res = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/mapa/marcacoes')
+    marcacoes.value = res.data
+    //Desenha cada marcação salva no mapa
+    marcacoes.value.forEach(m => {
+      L.marker([m.lat, m.lng]).addTo(map).bindPopup(`<b>Risco:</b><br>${m.descricao}`)
+    })
+  } catch (err) { console.error("Erro ao carregar:", err) }
 
-  map.on('click', (e) => {
+//Salvar nova marcação
+  map.on('click', async (e) => {
     const { lat, lng } = e.latlng
     const desc = prompt("Descreva o risco neste local:")
     if (desc) {
-      L.marker([lat, lng]).addTo(map).bindPopup(`<b>Risco:</b><br>${desc}`).openPopup()
+      try {
+        const novaMarca = { lat, lng, descricao: desc }
+        const res = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/mapa/marcacoes', novaMarca)
+        
+        // Adiciona o pino visualmente após o sucesso no banco
+        L.marker([lat, lng]).addTo(map).bindPopup(`<b>Risco:</b><br>${desc}`).openPopup()
+      } catch (e) { alert("Erro ao salvar marcação.") }
     }
   })
 })

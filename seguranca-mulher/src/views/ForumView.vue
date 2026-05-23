@@ -87,79 +87,64 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 
-const router = useRouter()
-const abaAtiva = ref('feed')
-const novoDesabafo = ref('')
 const desabafos = ref([])
-const telefoneConfianca = ref(localStorage.getItem('numeroConfiancaAlia') || '')
+const novoDesabafo = ref('')
+const abaAtiva = ref('feed')
+const marcacoes = ref([])
 
 onMounted(async () => {
+  // Carrega os desabafos
   try {
-    const response = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/desabafos')
-    desabafos.value = response.data
-  } catch (err) { console.error("Erro ao carregar:", err) }
+    const res = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/desabafos')
+    desabafos.value = res.data
+  } catch (err) { console.error("Erro ao carregar desabafos", err) }
+
+  // Carrega as marcações do mapa
+  try {
+    const response = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/mapa/marcacoes')
+    marcacoes.value = response.data
+  } catch (err) { console.error("Erro ao carregar marcações do mapa", err) }
 })
-
-const salvarPerfil = () => {
-  const numeroLimpo = telefoneConfianca.value.replace(/\D/g, '')
-  if (numeroLimpo.length < 10) return alert("Número inválido.")
-  localStorage.setItem('numeroConfiancaAlia', numeroLimpo)
-  alert("Contato salvo com sucesso!")
-}
-
-const excluirNumero = () => {
-  localStorage.removeItem('numeroConfiancaAlia')
-  telefoneConfianca.value = ''
-  alert("Número removido.")
-}
-
-const excluirConta = () => {
-  // Confirmação para evitar exclusão acidental
-  if (confirm("TEM CERTEZA? Esta ação apagará todos os seus dados deste dispositivo e você será desconectado.")) {
-    localStorage.removeItem('numeroConfiancaAlia');
-    // Se você tiver outros dados salvos (como token ou nome), limpe aqui:
-    // localStorage.clear(); 
-    alert("Conta excluída com sucesso. Até logo!");
-    router.push('/'); // Redireciona para o login
-  }
-};
 
 const postar = async () => {
   if (!novoDesabafo.value.trim()) return
-  try {
-    const res = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/desabafos', { texto: novoDesabafo.value })
-    desabafos.value.unshift(res.data)
-    novoDesabafo.value = ''
-  } catch (e) { alert("Erro ao postar.") }
+  const res = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/desabafos', { texto: novoDesabafo.value })
+  desabafos.value.unshift(res.data)
+  novoDesabafo.value = ''
 }
 
-const excluirPost = async (id) => {
-  if (!confirm("Excluir esta publicação?")) return
-  await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/desabafos/${id}`)
-  desabafos.value = desabafos.value.filter(p => p._id !== id)
-}
-
-const curtir = (post) => {
-  post.curtidoByUser = !post.curtidoByUser
-  post.curtidas = post.curtidoByUser ? (post.curtidas || 0) + 1 : (post.curtidas || 1) - 1
-}
-
-const adicionarResposta = (post) => {
+const adicionarResposta = async (post) => {
   if (!post.novaResposta?.trim()) return
-  if (!post.respostas) post.respostas = []
-  post.respostas.push({ texto: post.novaResposta })
-  post.novaResposta = ''
+  try {
+    const res = await axios.post(`https://projeto-extensao-3xkh.onrender.com/api/desabafos/${post._id}/comentar`, {
+      comentario: { texto: post.novaResposta }
+    })
+    post.respostas = res.data.respostas
+    post.novaResposta = ''
+    post.mostrarRespostas = true
+  } catch (e) { alert("Erro ao comentar") }
 }
 
-const deslogar = () => router.push('/')
+const postsFiltrados = computed(() => 
+  abaAtiva.value === 'perfil' ? desabafos.value.filter(p => p.proprio) : desabafos.value
+)
 
-const postsFiltrados = computed(() => {
-  return abaAtiva.value === 'perfil' ? desabafos.value.filter(p => p.proprio) : desabafos.value
-})
+const salvarMarcacaoNoBanco = async (novaMarca) => {
+  try {
+    // Envia para o servidor salvar no MongoDB
+    const response = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/mapa/marcacoes', novaMarca);
+    
+    // Agora que o servidor confirmou, você adiciona na lista local
+    marcacoes.value.push(response.data); 
+    alert("Marcação salva com sucesso!");
+  } catch (error) {
+    console.error("Erro ao salvar marcação:", error);
+  }
+  };
+
 </script>
 
 <style scoped>

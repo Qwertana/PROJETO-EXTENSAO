@@ -132,6 +132,34 @@ app.post('/api/mapa/marcacoes', async (req, res) => {
   res.status(201).json(nova);
 });
 
+// Rota para buscar TODAS as marcações salvas
+app.get('/api/mapa/marcacoes', async (req, res) => {
+  try {
+    const todas = await Marcacao.find(); // Busca no banco
+    res.json(todas);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Rota para adicionar um comentário a um desabafo
+app.post('/api/desabafos/:id/comentar', async (req, res) => {
+  try {
+    const { comentario } = req.body;
+    const desabafo = await Desabafo.findById(req.params.id);
+    
+    if (!desabafo) return res.status(404).json({ error: "Post não encontrado" });
+
+    // Adiciona o comentário no array de respostas
+    desabafo.respostas.push(comentario);
+    await desabafo.save();
+
+    res.status(200).json(desabafo);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`SERVIDOR COMPLETO RODANDO EM: http://localhost:${PORT}`);
 });
