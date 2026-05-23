@@ -36,6 +36,16 @@ const Usuario = mongoose.model('Usuario', UsuarioSchema);
 
 // --- ROTAS DA API ---
 
+// Rota de teste para ver se o modelo lista usuários
+app.get('/api/testar-usuarios', async (req, res) => {
+  try {
+    const todos = await Usuario.find(); // Tenta buscar todos os usuários
+    res.json(todos);
+  } catch (error) {
+    res.status(500).json({ error: "O Modelo não está funcionando: " + error.message });
+  }
+});
+
 // Rota para buscar os posts guardados no MongoDB
 app.get('/api/desabafos', async (req, res) => {
   try {
