@@ -71,12 +71,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap');
+
 * {
   box-sizing: border-box !important;
   max-width: 100% !important;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap');
 
 .mapa-container {
   position: fixed;

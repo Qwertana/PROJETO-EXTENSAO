@@ -1,131 +1,129 @@
 <template>
   <div class="registro-page">
-    <div class="card-registro">
-      <h2>Criar Conta</h2>
-      <p>Cadastre-se para fazer parte da rede.</p>
-
-      <div class="scroll-area">
-        <div class="input-group">
-          <label>Nome Completo</label>
-          <input v-model="form.nome" type="text" placeholder="Seu nome">
-        </div>
-
-        <div class="input-group">
-          <label>CPF</label>
-          <input v-model="form.cpf" type="text" placeholder="000.000.000-00">
-        </div>
-
-        <div class="input-group">
-          <label>Data de Nascimento</label>
-          <input v-model="form.nascimento" type="date">
-        </div>
-
-        <hr>
-        <h3>Rede de Apoio</h3>
-        <p class="sub-label">Contatos que receberão seu alerta de emergência.</p>
-
-        <div class="input-group">
-          <label>Nome do Contato 1</label>
-          <input v-model="form.contato1" type="text" placeholder="Nome do contato">
-        </div>
-        <div class="input-group">
-          <label>WhatsApp do Contato 1</label>
-          <input v-model="form.tel1" type="text" placeholder="(00) 00000-0000">
-        </div>
+    
+    <div class="quadro-registro">
+      <h1 class="titulo-pagina">Criar Conta</h1>
+      
+      <div class="input-grupo">
+        <input v-model="nome" type="text" placeholder="Nome Completo" />
+        <input v-model="cpf" type="text" placeholder="CPF (99999999999)" />
+        <input v-model="senha" type="password" placeholder="Data de nascimento (99999999999)" />
+        <input v-model="telefoneSeguranca" type="tel" placeholder="Nº de Segurança (com DDD)" />
+        <button class="btn-registrar" @click="finalizarCadastro">Cadastrar</button>
       </div>
-
-      <button @click="salvarRegistro" class="btn-finalizar">FINALIZAR CADASTRO</button>
-      <RouterLink to="/" class="voltar">Já tenho conta? Voltar</RouterLink>
     </div>
+
+    <button class="btn-voltar-flutuante" @click="voltarLogin">
+      Já tenho conta? Entrar
+    </button>
+
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const router = useRouter()
-const form = reactive({
-  nome: '', cpf: '', nascimento: '',
-  contato1: '', tel1: ''
-})
+const router = useRouter();
+const nome = ref('');
+const cpf = ref('');
+const senha = ref('');
+const telefoneSeguranca = ref('');
 
-const salvarRegistro = () => {
-  alert("Cadastro realizado com sucesso! Agora você faz parte da rede de proteção.")
-  router.push('/')
-}
+const finalizarCadastro = () => {
+  if(nome.value && cpf.value && senha.value && telefoneSeguranca.value) {
+    const numeroLimpo = telefoneSeguranca.value.replace(/\D/g, '');
+    localStorage.setItem('numeroConfiancaAlia', numeroLimpo);
+    alert("Cadastro realizado e número de segurança salvo!");
+    router.push('/'); // Volta para o login
+  } else {
+    alert("Por favor, preencha todos os campos.");
+  }
+};
+
+const voltarLogin = () => {
+  router.push('/');
+};
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap');
+
 .registro-page {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #fdf2f2;
-}
-.card-registro {
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 400px;
-  text-align: center;
-  max-height: 90vh;
+  height: 100%;
+  background: url('@/assets/fundo-comum.png') no-repeat center center;
+  background-size: cover;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center; /* No registro, vamos deixar bem no meio da tela */
+  font-family: 'Quicksand', sans-serif;
 }
-.scroll-area {
-  overflow-y: auto;
-  text-align: left;
-  padding-right: 10px;
+
+.quadro-registro {
+  background: rgba(255, 255, 255, 0.45);
+  padding: 40px;
+  border-radius: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  width: 85%;
+  max-width: 400px;
+  text-align: center;
   margin-bottom: 20px;
 }
-h2, h3 { 
-  color: #5a5a5a; 
-  margin-bottom: 5px; 
-  }
-.sub-label { 
-  font-size: 0.8rem; 
-  color: #000000; 
-  margin-bottom: 15px; 
-  }
-.input-group { 
-  margin-bottom: 15px; 
-  }
-label { 
-  color: #5a5a5a; 
-  font-weight: 600; 
-  font-size: 0.9rem; 
-  }
-input { 
-  width: 100%; 
-  padding: 10px; 
-  border: 1px solid #000000; 
-  border-radius: 8px; 
-  margin-top: 5px; 
-  }
-.btn-finalizar { 
-  width: 100%; 
-  padding: 15px; 
-  background: #ff4d6d; 
-  color: white; 
-  border: none; 
-  border-radius: 8px; 
-  font-weight: bold; 
-  cursor: pointer; 
-  }
-.voltar { 
-  display: block; 
-  margin-top: 15px; 
-  color: #ff4d6d; 
-  text-decoration: none; 
-  font-size: 0.9rem; 
-  }
-hr { 
-  border: 0; 
-  border-top: 1px solid #ff0062; 
-  margin: 20px 0; 
-  }
-  
+
+.titulo-pagina {
+  color: #5a5a5a;
+  font-weight: 700;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+}
+
+.input-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input {
+  padding: 15px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.7);
+  color: #5a5a5a;
+  font-family: 'Quicksand', sans-serif;
+}
+
+input:focus {
+  border-color: #ff4d6d;
+  outline: none;
+}
+
+.btn-registrar {
+  background: #ff4d6d;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 0 4px 12px rgba(255, 77, 109, 0.3);
+}
+
+.btn-voltar-flutuante {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 12px 25px;
+  border-radius: 50px;
+  border: none;
+  font-weight: 700;
+  color: #ff4d6d;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
 </style>

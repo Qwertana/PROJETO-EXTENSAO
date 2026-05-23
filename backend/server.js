@@ -27,6 +27,13 @@ const DesabafoSchema = new mongoose.Schema({
 
 const Desabafo = mongoose.model('Desabafo', DesabafoSchema);
 
+const UsuarioSchema = new mongoose.Schema({
+  cpf: { type: String, required: true, unique: true },
+  dataNasc: { type: String, required: true }
+});
+
+const Usuario = mongoose.model('Usuario', UsuarioSchema);
+
 // --- ROTAS DA API ---
 
 // Rota para buscar os posts guardados no MongoDB
@@ -64,4 +71,32 @@ app.delete('/api/desabafos/:id', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`SERVIDOR COMPLETO RODANDO EM: http://localhost:${PORT}`);
+});
+
+// Rota de CADASTRO
+app.post('/api/registro', async (req, res) => {
+  try {
+    const { cpf, dataNasc } = req.body;
+    const novoUsuario = new Usuario({ cpf, dataNasc });
+    await novoUsuario.save();
+    res.status(201).json({ message: "Usuário registrado com sucesso!" });
+  } catch (error) {
+    res.status(400).json({ error: "Erro ao registrar. O CPF pode já estar cadastrado." });
+  }
+});
+
+// Rota de LOGIN
+app.post('/api/login', async (req, res) => {
+  try {
+    const { cpf, dataNasc } = req.body;
+    const usuario = await Usuario.findOne({ cpf, dataNasc });
+    
+    if (usuario) {
+      res.status(200).json({ message: "Login realizado com sucesso!" });
+    } else {
+      res.status(401).json({ error: "CPF ou Data de Nascimento inválidos." });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Erro no servidor." });
+  }
 });
