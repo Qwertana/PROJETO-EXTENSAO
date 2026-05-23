@@ -34,6 +34,18 @@ const UsuarioSchema = new mongoose.Schema({
 
 const Usuario = mongoose.model('Usuario', UsuarioSchema);
 
+const MarcacaoSchema = new mongoose.Schema({
+  lat: Number,
+  lng: Number,
+  tipo: String,
+  createdAt: { type: Date, default: Date.now } // Grava a data atual
+});
+
+//Apaga após 3 dias (3 dias * 24 horas * 60 min * 60 seg = 259200 segundos)
+MarcacaoSchema.index({ createdAt: 1 }, { expireAfterSeconds: 259200 });
+
+const Marcacao = mongoose.model('Marcacao', MarcacaoSchema);
+
 // --- ROTAS DA API ---
 
 // Rota de teste para ver se o modelo lista usuários
@@ -79,10 +91,6 @@ app.delete('/api/desabafos/:id', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`SERVIDOR COMPLETO RODANDO EM: http://localhost:${PORT}`);
-});
-
 // Rota de CADASTRO
 app.post('/api/registro', async (req, res) => {
   try {
@@ -109,4 +117,21 @@ app.post('/api/login', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Erro no servidor." });
   }
+});
+
+// Rota para TODOS verem as marcacoes
+app.get('/api/mapa/marcacoes', async (req, res) => {
+  const todas = await Marcacao.find(); // Busca tudo sem filtro
+  res.json(todas);
+});
+
+// Rota para QUALQUER UM salvar uma marcacao
+app.post('/api/mapa/marcacoes', async (req, res) => {
+  const nova = new Marcacao(req.body);
+  await nova.save();
+  res.status(201).json(nova);
+});
+
+app.listen(PORT, () => {
+  console.log(`SERVIDOR COMPLETO RODANDO EM: http://localhost:${PORT}`);
 });

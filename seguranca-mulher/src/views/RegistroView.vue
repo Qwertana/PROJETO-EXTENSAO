@@ -8,7 +8,6 @@
         <input v-model="nome" type="text" placeholder="Nome Completo" />
         <input v-model="cpf" type="text" placeholder="CPF (99999999999)" />
         <input v-model="dataNasc" type="text" placeholder="Data de Nascimento (ddmmaaaa)" />
-        <input v-model="telefoneSeguranca" type="tel" placeholder="Nº de Segurança (com DDD)" />
         <button @click="registrar" class="btn-registrar">Finalizar Cadastro</button>
       </div>
     </div>
@@ -29,10 +28,9 @@ const router = useRouter();
 const nome = ref('');
 const cpf = ref('');
 const dataNasc = ref('');
-const telefoneSeguranca = ref('');
 
 const registrar = async () => {
-  if (!cpf.value || !dataNasc.value || !telefoneSeguranca.value) {
+  if (!cpf.value || !dataNasc.value) {
     return alert("Por favor, preencha os campos obrigatórios.");
   }
   try {
