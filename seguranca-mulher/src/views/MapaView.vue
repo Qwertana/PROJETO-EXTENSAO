@@ -76,27 +76,29 @@ onMounted(() => {
 .mapa-container {
   width: 100vw;
   height: 100vh;
-  position: relative;
-  overflow: hidden; /* Isso impede que a tela fique "solta" e deslize para o lado */
+  position: fixed; /* Fixa na tela */
+  top: 0;
+  left: 0;
   margin: 0;
   padding: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 #map {
   flex: 1;
-  width: 100%;
-  height: 100%;
-  z-index: 1; /* Garante que o mapa fique no fundo */
+  width: 100vw;
+  height: 100vh;
+  z-index: 0; /* Mapa no fundo */
 }
 
-body, html {
+:global(body, html) {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Impede a rolagem lateral no celular */
+  overflow: hidden; /* Bloqueia qualquer rolagem */
 }
 
 .mapa-header {
