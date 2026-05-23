@@ -74,17 +74,29 @@ onMounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap');
 
 .mapa-container {
-  position: relative;
   width: 100vw;
   height: 100vh;
-  overflow: hidden;
-  font-family: 'Quicksand', sans-serif;
+  position: relative;
+  overflow: hidden; /* Isso impede que a tela fique "solta" e deslize para o lado */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 #map {
+  flex: 1;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 1; /* Garante que o mapa fique no fundo */
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Impede a rolagem lateral no celular */
 }
 
 .mapa-header {
