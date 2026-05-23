@@ -7,9 +7,9 @@
       <div class="input-grupo">
         <input v-model="nome" type="text" placeholder="Nome Completo" />
         <input v-model="cpf" type="text" placeholder="CPF (99999999999)" />
-        <input v-model="senha" type="password" placeholder="Data de nascimento (99999999999)" />
+        <input v-model="dataNasc" type="text" placeholder="Data de Nascimento (ddmmaaaa)" />
         <input v-model="telefoneSeguranca" type="tel" placeholder="Nº de Segurança (com DDD)" />
-        <button class="btn-registrar" @click="finalizarCadastro">Cadastrar</button>
+        <button @click="registrar">Finalizar Cadastro</button>
       </div>
     </div>
 
@@ -23,23 +23,36 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 const router = useRouter();
 const nome = ref('');
 const cpf = ref('');
-const senha = ref('');
+const dataNasc = ref('');
 const telefoneSeguranca = ref('');
 
-const finalizarCadastro = () => {
-  if(nome.value && cpf.value && senha.value && telefoneSeguranca.value) {
+const registrar = async () => {
+  if (!cpf.value || !dataNasc.value || !telefoneSeguranca.value) {
+    return alert("Por favor, preencha os campos obrigatórios.");
+  }
+  try {
+    // Enviando para a sua rota de registro no servidor
+    await axios.post('https://projeto-extensao-3xkh.onrender.com/api/registro', {
+      cpf: cpf.value,
+      dataNasc: dataNasc.value
+    })
+
+    //Salva o contato de segurança no celular do usuário
     const numeroLimpo = telefoneSeguranca.value.replace(/\D/g, '');
     localStorage.setItem('numeroConfiancaAlia', numeroLimpo);
-    alert("Cadastro realizado e número de segurança salvo!");
-    router.push('/'); // Volta para o login
-  } else {
-    alert("Por favor, preencha todos os campos.");
+
+    alert("Cadastro realizado com sucesso! Agora você pode fazer login.");
+    router.push('/'); // Volta para a tela de login
+  } catch (error) {
+    alert("Erro ao cadastrar. Verifique se o CPF já não está registrado.");
+    console.error(error);
   }
-};
+}
 
 const voltarLogin = () => {
   router.push('/');
