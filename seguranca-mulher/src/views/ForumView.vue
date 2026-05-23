@@ -68,7 +68,7 @@
         
         <div class="botoes-perfil-container">
           <button @click="salvarPerfil" class="btn-salvar-perfil">Salvar Alterações</button>
-          <button v-if="telefoneConfianca" @click="excluirNumero" class="btn-deletar-perfil">Remover Número</button>
+          <button @click="excluirNumero" class="btn-deletar-perfil">Remover Número</button>
         </div>
 
         <button @click="excluirConta" class="btn-excluir-conta-dentro">
@@ -94,15 +94,35 @@ const desabafos = ref([])
 const novoDesabafo = ref('')
 const abaAtiva = ref('feed')
 const marcacoes = ref([])
+const telefoneConfianca = ref('')
+const cpfLogado = localStorage.getItem('cpfUsuario');
+
+// Função para salvar
+const salvarPerfil = () => {
+  if (telefoneConfianca.value.length < 10) {
+    return alert("Digite um número válido com DDD.")
+  }
+  localStorage.setItem('numeroConfiancaAlia', telefoneConfianca.value)
+  alert("Número de emergência atualizado com sucesso!")
+}
+
+// Função para remover
+const excluirNumero = () => {
+  localStorage.removeItem('numeroConfiancaAlia')
+  telefoneConfianca.value = ''
+  alert("Número removido.")
+}
 
 onMounted(async () => {
-  // Carrega os desabafos
+  //Carrega o número de segurança
+  const salvo = localStorage.getItem('numeroConfiancaAlia')
+  if (salvo) telefoneConfianca.value = salvo
+  //Carrega os desabafos
   try {
     const res = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/desabafos')
     desabafos.value = res.data
   } catch (err) { console.error("Erro ao carregar desabafos", err) }
-
-  // Carrega as marcações do mapa
+  //Carrega as marcações do mapa
   try {
     const response = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/mapa/marcacoes')
     marcacoes.value = response.data
@@ -133,8 +153,6 @@ const adicionarResposta = async (post) => {
     post.mostrarRespostas = true
   } catch (e) { alert("Erro ao comentar") }
 }
-
-const cpfLogado = localStorage.getItem('cpfUsuario');
 
 const postsFiltrados = computed(() => {
   const postsComAutor = desabafos.value.map(post => ({
