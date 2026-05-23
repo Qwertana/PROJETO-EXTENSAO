@@ -74,23 +74,23 @@ onMounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap');
 
 .mapa-container {
-  width: 100vw;
-  height: 100vh;
-  position: fixed; /* Fixa na tela */
+  position: fixed;
   top: 0;
   left: 0;
+  width: 100vw;
+  height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 #map {
-  flex: 1;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0; /* Mapa no fundo */
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
 }
 
 :global(body, html) {
