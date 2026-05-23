@@ -9,7 +9,6 @@
         <input v-model="cpf" type="text" placeholder="CPF (99999999999)" />
         <input v-model="dataNasc" type="text" placeholder="Data de Nascimento (ddmmaaaa)" />
         <input v-model="telefoneSeguranca" type="tel" placeholder="Nº de Segurança (com DDD)" />
-        <button @click="registrar">Finalizar Cadastro</button>
         <button @click="registrar" class="btn-registrar">Finalizar Cadastro</button>
       </div>
     </div>
