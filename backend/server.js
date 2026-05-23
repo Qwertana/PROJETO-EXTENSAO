@@ -17,6 +17,7 @@ mongoose.connect(MONGO_URI)
 // --- SCHEMA (Estrutura da tabela no Banco de Dados NoSQL) ---
 const DesabafoSchema = new mongoose.Schema({
   texto: { type: String, required: true },
+  cpfAutor: String,
   data: { type: String, default: "Agora" },
   curtidas: { type: Number, default: 0 },
   curtidoByUser: { type: Boolean, default: false },
@@ -37,13 +38,13 @@ const Usuario = mongoose.model('Usuario', UsuarioSchema);
 const MarcacaoSchema = new mongoose.Schema({
   lat: Number,
   lng: Number,
+  descricao: String,
   tipo: String,
-  createdAt: { type: Date, default: Date.now } // Grava a data atual
+  createdAt: { type: Date, default: Date.now }
 });
 
 //Apaga após 3 dias (3 dias * 24 horas * 60 min * 60 seg = 259200 segundos)
 MarcacaoSchema.index({ createdAt: 1 }, { expireAfterSeconds: 259200 });
-
 const Marcacao = mongoose.model('Marcacao', MarcacaoSchema);
 
 // --- ROTAS DA API ---
@@ -68,11 +69,30 @@ app.get('/api/desabafos', async (req, res) => {
   }
 });
 
-// Rota para salvar um desabafo na nuvem
+app.post('/api/desabafos/:id/comentar', async (req, res) => {
+  try {
+    const { comentario } = req.body;
+    const desabafo = await Desabafo.findById(req.params.id);
+    
+    if (!desabafo) return res.status(404).json({ error: "Post não encontrado" });
+
+    desabafo.respostas.push(comentario);
+    desabafo.markModified('respostas'); // ESSENCIAL PARA ARRAYS NO MONGOOSE
+    await desabafo.save();
+
+    res.status(200).json(desabafo);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//Rota para salvar o Autor
 app.post('/api/desabafos', async (req, res) => {
   try {
+    const { texto, cpfAutor } = req.body;
     const novoDesabafo = new Desabafo({
-      texto: req.body.texto
+      texto: texto,
+      cpfAutor: cpfAutor // Agora ele será salvo corretamente
     });
     const salvo = await novoDesabafo.save();
     res.status(201).json(salvo);
@@ -84,8 +104,17 @@ app.post('/api/desabafos', async (req, res) => {
 // Rota para deletar do banco por ID
 app.delete('/api/desabafos/:id', async (req, res) => {
   try {
+    const cpfLogado = req.query.cpfLogado; 
+    const post = await Desabafo.findById(req.params.id);
+
+    if (!post) return res.status(404).json({ error: "Post não encontrado" });
+
+    if (post.cpfAutor !== cpfLogado) {
+      return res.status(403).json({ error: "Você não tem permissão para deletar este post." });
+    }
+
     await Desabafo.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: "Post deletado com sucesso." });
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

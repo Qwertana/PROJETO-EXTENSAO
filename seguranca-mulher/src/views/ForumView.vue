@@ -111,9 +111,15 @@ onMounted(async () => {
 
 const postar = async () => {
   if (!novoDesabafo.value.trim()) return
-  const res = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/desabafos', { texto: novoDesabafo.value })
-  desabafos.value.unshift(res.data)
-  novoDesabafo.value = ''
+  
+  try {
+    const res = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/desabafos', { 
+      texto: novoDesabafo.value,
+      cpfAutor: cpfLogado
+    })
+    desabafos.value.unshift(res.data)
+    novoDesabafo.value = ''
+  } catch (e) { alert("Erro ao postar.") }
 }
 
 const adicionarResposta = async (post) => {
@@ -128,9 +134,26 @@ const adicionarResposta = async (post) => {
   } catch (e) { alert("Erro ao comentar") }
 }
 
-const postsFiltrados = computed(() => 
-  abaAtiva.value === 'perfil' ? desabafos.value.filter(p => p.proprio) : desabafos.value
-)
+const cpfLogado = localStorage.getItem('cpfUsuario');
+
+const postsFiltrados = computed(() => {
+  const postsComAutor = desabafos.value.map(post => ({
+    ...post,
+    proprio: post.cpfAutor === cpfLogado
+  }));
+
+  if (abaAtiva.value === 'perfil') {
+    return postsComAutor.filter(p => p.proprio);
+  }
+
+  return postsComAutor;
+});
+
+const excluirPost = async (id) => {
+  if (!confirm("Excluir esta publicação?")) return
+  await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/desabafos/${id}?cpfLogado=${cpfLogado}`)
+  desabafos.value = desabafos.value.filter(p => p._id !== id)
+}
 
 const salvarMarcacaoNoBanco = async (novaMarca) => {
   try {
