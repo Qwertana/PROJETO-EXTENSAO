@@ -70,15 +70,18 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const router = useRouter()
-
 const desabafos = ref([])
 const novoDesabafo = ref('')
 const abaAtiva = ref('feed')
-const marcacoes = ref([])
 const telefoneConfianca = ref('')
+
+// Recupera o CPF da usuária logada
 const cpfLogado = localStorage.getItem('cpfUsuario');
 
-// Função para salvar
+// ==========================================
+// 1. CONFIGURAÇÕES DE PERFIL E CONTA
+// ==========================================
+
 const salvarPerfil = () => {
   if (telefoneConfianca.value.length < 10) {
     return alert("Digite um número válido com DDD.")
@@ -87,51 +90,56 @@ const salvarPerfil = () => {
   alert("Número de emergência atualizado com sucesso!")
 }
 
-// Função para excluir numero
 const excluirNumero = () => {
   localStorage.removeItem('numeroConfiancaAlia')
   telefoneConfianca.value = ''
   alert("Número removido com sucesso!")
 }
 
-// Função para excluir conta
 const excluirConta = async () => {
   if (!confirm("Tem certeza? Esta ação apagará seus dados permanentemente.")) return;
   try {
-    const cpf = localStorage.getItem('cpfUsuario');
-    // Chama o back-end para deletar o usuário (ajuste a rota conforme seu server.js)
-    await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/usuarios/${cpf}`);
-    // Limpa tudo e manda pro login
+    if (!cpfLogado) return alert("Erro: Usuária não identificada.");
+    
+    // Chama o back-end para deletar a usuária
+    await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/usuarios/${cpfLogado}`);
+    
+    // Limpa os dados locais e redireciona
     localStorage.clear();
     alert("Conta excluída com sucesso.");
     router.push('/login');
   } catch (error) {
     console.error("Erro ao deletar conta:", error);
-    alert("Erro ao excluir conta. Tente novamente.");
+    alert("Erro ao excluir conta. Verifique se o servidor está rodando.");
   }
 };
 
-//Deslogar
 const deslogar = () => {
   localStorage.clear();
   router.push('/login');
 };
 
+// ==========================================
+// 2. CARREGAMENTO INICIAL (MOUNTED)
+// ==========================================
+
 onMounted(async () => {
-  //Carrega o número de segurança
+  // Carrega o número de segurança salvo
   const salvo = localStorage.getItem('numeroConfiancaAlia')
   if (salvo) telefoneConfianca.value = salvo
-  //Carrega os desabafos
+
+  // Carrega os desabafos do servidor
   try {
     const res = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/desabafos')
     desabafos.value = res.data
-  } catch (err) { console.error("Erro ao carregar desabafos", err) }
-  //Carrega as marcações do mapa
-  try {
-    const response = await axios.get('https://projeto-extensao-3xkh.onrender.com/api/mapa/marcacoes')
-    marcacoes.value = response.data
-  } catch (err) { console.error("Erro ao carregar marcações do mapa", err) }
+  } catch (err) { 
+    console.error("Erro ao carregar desabafos", err) 
+  }
 })
+
+// ==========================================
+// 3. LÓGICA DE POSTS (CRIAR, FILTRAR, EXCLUIR)
+// ==========================================
 
 const postar = async () => {
   if (!novoDesabafo.value.trim()) return
@@ -139,11 +147,75 @@ const postar = async () => {
   try {
     const res = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/desabafos', { 
       texto: novoDesabafo.value,
-      cpfAutor: cpfLogado
+      cpfAutor: cpfLogado // O Backend precisa salvar isso no banco de dados!
     })
     desabafos.value.unshift(res.data)
     novoDesabafo.value = ''
-  } catch (e) { alert("Erro ao postar.") }
+  } catch (e) { 
+    alert("Erro ao postar.") 
+  }
+}
+
+// Filtra quem é o dono do post para mostrar a lixeira correta
+const postsFiltrados = computed(() => {
+  // Pegamos o CPF atual toda vez que a tela renderiza
+  const userCpf = localStorage.getItem('cpfUsuario');
+  
+  return desabafos.value.map(post => {
+    // Verificação super estrita: O post tem autor? O usuário tem CPF? Eles são exatamente iguais?
+    const isDono = Boolean(
+      post.cpfAutor && 
+      post.cpfAutor !== "excluido" && 
+      userCpf && 
+      String(post.cpfAutor) === String(userCpf)
+    );
+
+    return {
+      ...post,
+      proprio: isDono // Sobrescreve qualquer erro que venha do back-end
+    };
+  }).filter(post => {
+    if (abaAtiva.value === 'perfil') return post.proprio;
+    return true; 
+  });
+});
+
+const excluirPost = async (id) => {
+  if (!confirm("Excluir esta publicação?")) return
+  try {
+    await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/desabafos/${id}?cpfLogado=${cpfLogado}`)
+    // Remove da tela sem precisar recarregar a página
+    desabafos.value = desabafos.value.filter(p => p._id !== id)
+  } catch (e) {
+    alert("Erro ao excluir o post. Você só pode excluir suas próprias publicações.");
+  }
+}
+
+// ==========================================
+// 4. INTERAÇÕES (CURTIR E COMENTAR)
+// ==========================================
+
+const curtir = async (post) => {
+  // Impede que a usuária curta o próprio post
+  if (post.proprio) {
+    return alert("Você não pode curtir sua própria publicação.");
+  }
+
+  try {
+    // Chamada para o backend registrar a curtida (ajuste a rota se necessário)
+    const res = await axios.post(`https://projeto-extensao-3xkh.onrender.com/api/desabafos/${post._id}/curtir`, {
+      cpfUsuario: cpfLogado
+    });
+    
+    // Atualiza os dados com a resposta do servidor
+    post.curtidas = res.data.curtidas;
+    post.curtidoByUser = !post.curtidoByUser;
+  } catch (e) {
+    console.error("Erro ao curtir no servidor", e);
+    // Atualização visual caso o endpoint ainda não exista no seu server.js
+    post.curtidoByUser = !post.curtidoByUser;
+    post.curtidas = post.curtidoByUser ? (post.curtidas || 0) + 1 : (post.curtidas || 0) - 1;
+  }
 }
 
 const adicionarResposta = async (post) => {
@@ -155,46 +227,10 @@ const adicionarResposta = async (post) => {
     post.respostas = res.data.respostas
     post.novaResposta = ''
     post.mostrarRespostas = true
-  } catch (e) { alert("Erro ao comentar") }
-}
-
-const postsFiltrados = computed(() => {
-  // A variável cpfLogado deve ser lida dentro do computed para garantir reatividade
-  const userCpf = localStorage.getItem('cpfUsuario');
-  
-  const listaProcessada = desabafos.value.map(post => ({
-    ...post,
-    // Verifica se o CPF existe e se é o mesmo do logado
-    proprio: post.cpfAutor && userCpf && post.cpfAutor === userCpf
-  }));
-
-  // Se aba ativa for 'perfil', filtra apenas os que são do usuário
-  if (abaAtiva.value === 'perfil') {
-    return listaProcessada.filter(p => p.proprio);
+  } catch (e) { 
+    alert("Erro ao comentar") 
   }
-
-  return listaProcessada;
-});
-
-const excluirPost = async (id) => {
-  if (!confirm("Excluir esta publicação?")) return
-  await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/desabafos/${id}?cpfLogado=${cpfLogado}`)
-  desabafos.value = desabafos.value.filter(p => p._id !== id)
 }
-
-const salvarMarcacaoNoBanco = async (novaMarca) => {
-  try {
-    // Envia para o servidor salvar no MongoDB
-    const response = await axios.post('https://projeto-extensao-3xkh.onrender.com/api/mapa/marcacoes', novaMarca);
-    
-    // Agora que o servidor confirmou, você adiciona na lista local
-    marcacoes.value.push(response.data); 
-    alert("Marcação salva com sucesso!");
-  } catch (error) {
-    console.error("Erro ao salvar marcação:", error);
-  }
-  };
-
 </script>
 
 <style scoped>
