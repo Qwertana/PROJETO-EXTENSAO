@@ -26,40 +26,18 @@
             <div class="avatar-anonimo">{{ post.proprio ? '👤' : '✨' }}</div>
             <div class="conteudo-post">
               <p class="texto-post">{{ post.texto }}</p>
-              
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="data-post">{{ post.data }} • {{ post.proprio ? 'Postado por você' : 'Anônimo' }}</span>
                 <button v-if="post.proprio" @click="excluirPost(post._id)" class="btn-excluir" title="Excluir">🗑️</button>
               </div>
-
-              <div class="interacoes">
-                <button @click="curtir(post)" class="btn-interagir" :class="{ 'curtido': post.curtidoByUser }">
-                  <span>{{ post.curtidoByUser ? '❤️' : '🤍' }}</span> {{ post.curtidas || 0 }}
-                </button>
-                <button @click="post.mostrarRespostas = !post.mostrarRespostas" class="btn-interagir">
-                  💬 {{ post.respostas ? post.respostas.length : 0 }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="post.mostrarRespostas" class="secao-respostas">
-            <div class="lista-respostas">
-              <div v-for="(resp, rIndex) in post.respostas" :key="rIndex" class="card-resposta">
-                <p class="texto-resposta">{{ resp.texto }}</p>
-              </div>
-            </div>
-            <div class="input-resposta-wrapper">
-              <input v-model="post.novaResposta" type="text" placeholder="Apoie este desabafo..." @keyup.enter="adicionarResposta(post)" />
-              <button @click="adicionarResposta(post)" class="btn-enviar-resposta">Enviar</button>
             </div>
           </div>
         </div>
       </template>
 
-<div v-else class="card-editar-perfil">
+      <div v-else class="card-editar-perfil">
         <h3 class="titulo-sessao">Configurações de Segurança</h3>
-        <p class="texto-instrucao">O número abaixo receberá uma mensagem de alerta caso você acione o SOS no Mapa.</p>
+        <p class="texto-instrucao">O número abaixo receberá um alerta se você acionar o SOS.</p>
         
         <div class="input-grupo">
           <label>Número de Emergência (DDD + Telefone):</label>
@@ -74,7 +52,7 @@
         <button @click="excluirConta" class="btn-excluir-conta-dentro">
           Excluir minha conta permanentemente
         </button>
-      </div> 
+      </div>
     </main>
 
     <footer v-if="abaAtiva !== 'editar'" class="input-container">
@@ -88,7 +66,10 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
+
+const router = useRouter()
 
 const desabafos = ref([])
 const novoDesabafo = ref('')
@@ -106,12 +87,35 @@ const salvarPerfil = () => {
   alert("Número de emergência atualizado com sucesso!")
 }
 
-// Função para remover
+// Função para excluir numero
 const excluirNumero = () => {
   localStorage.removeItem('numeroConfiancaAlia')
   telefoneConfianca.value = ''
-  alert("Número removido.")
+  alert("Número removido com sucesso!")
 }
+
+// Função para excluir conta
+const excluirConta = async () => {
+  if (!confirm("Tem certeza? Esta ação apagará seus dados permanentemente.")) return;
+  try {
+    const cpf = localStorage.getItem('cpfUsuario');
+    // Chama o back-end para deletar o usuário (ajuste a rota conforme seu server.js)
+    await axios.delete(`https://projeto-extensao-3xkh.onrender.com/api/usuarios/${cpf}`);
+    // Limpa tudo e manda pro login
+    localStorage.clear();
+    alert("Conta excluída com sucesso.");
+    router.push('/login');
+  } catch (error) {
+    console.error("Erro ao deletar conta:", error);
+    alert("Erro ao excluir conta. Tente novamente.");
+  }
+};
+
+//Deslogar
+const deslogar = () => {
+  localStorage.clear();
+  router.push('/login');
+};
 
 onMounted(async () => {
   //Carrega o número de segurança
@@ -155,16 +159,21 @@ const adicionarResposta = async (post) => {
 }
 
 const postsFiltrados = computed(() => {
-  const postsComAutor = desabafos.value.map(post => ({
+  // A variável cpfLogado deve ser lida dentro do computed para garantir reatividade
+  const userCpf = localStorage.getItem('cpfUsuario');
+  
+  const listaProcessada = desabafos.value.map(post => ({
     ...post,
-    proprio: post.cpfAutor === cpfLogado
+    // Verifica se o CPF existe e se é o mesmo do logado
+    proprio: post.cpfAutor && userCpf && post.cpfAutor === userCpf
   }));
 
+  // Se aba ativa for 'perfil', filtra apenas os que são do usuário
   if (abaAtiva.value === 'perfil') {
-    return postsComAutor.filter(p => p.proprio);
+    return listaProcessada.filter(p => p.proprio);
   }
 
-  return postsComAutor;
+  return listaProcessada;
 });
 
 const excluirPost = async (id) => {
